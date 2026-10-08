@@ -3,7 +3,7 @@ from pathlib import Path
 from tree_sitter import Language, Parser
 import tree_sitter_python as tree_sitter_python
 
-from app.services.parser.models import CodeEntity, ParseResult
+from app.services.parser.models import CodeEntity, CodeCall, ParseResult
 
 
 class PythonParser:
@@ -26,7 +26,7 @@ class PythonParser:
 
         return result
 
-    def _walk(self, node, source, result):
+    def _walk(self, node, source, result, current_function=None):
         if node.type == "function_definition":
             name_node = node.child_by_field_name("name")
 
@@ -43,6 +43,8 @@ class PythonParser:
                         line=node.start_point[0] + 1,
                     )
                 )
+
+                current_function = name
 
         elif node.type == "class_definition":
             name_node = node.child_by_field_name("name")
@@ -71,5 +73,28 @@ class PythonParser:
                 source[node.start_byte:node.end_byte].decode("utf-8")
             )
 
+        elif node.type == "call":
+            function_node = node.child_by_field_name("function")
+
+            if function_node:
+                callee = source[
+                    function_node.start_byte:function_node.end_byte
+                ].decode("utf-8")
+
+                if current_function:
+                    result.calls.append(
+                        CodeCall(
+                            caller=current_function,
+                            callee=callee,
+                            file_path=result.file_path,
+                            line=node.start_point[0] + 1,
+                        )
+                    )
+
         for child in node.children:
-            self._walk(child, source, result)
+            self._walk(
+                child,
+                source,
+                result,
+                current_function,
+            )

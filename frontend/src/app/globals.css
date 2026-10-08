@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+/* ─── Design tokens ──────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces */
+  --bg:            #fafafa;
+  --bg-elevated:   #ffffff;
+  --bg-subtle:     #f4f4f5;
+  --bg-muted:      #e4e4e7;
+
+  /* Borders */
+  --border:        #e4e4e7;
+  --border-subtle: #f0f0f1;
+
+  /* Text */
+  --text:          #09090b;
+  --text-muted:    #71717a;
+  --text-subtle:   #a1a1aa;
+
+  /* Accent */
+  --accent:        #18181b;
+  --accent-hover:  #27272a;
+
+  /* Status */
+  --success:       #16a34a;
+  --warning:       #ca8a04;
+  --danger:        #dc2626;
+  --info:          #2563eb;
+
+  /* Sidebar */
+  --sidebar-width: 220px;
+  --sidebar-collapsed-width: 56px;
+  --topbar-height: 52px;
+}
+
+.dark {
+  --bg:            #09090b;
+  --bg-elevated:   #111113;
+  --bg-subtle:     #18181b;
+  --bg-muted:      #27272a;
+
+  --border:        #27272a;
+  --border-subtle: #1f1f22;
+
+  --text:          #fafafa;
+  --text-muted:    #a1a1aa;
+  --text-subtle:   #71717a;
+
+  --accent:        #e4e4e7;
+  --accent-hover:  #fafafa;
+}
+
+/* ─── Tailwind theme bridge ──────────────────────────────────────────────── */
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+}
+
+/* ─── Base reset ─────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+code, pre, kbd {
+  font-family: var(--font-geist-mono), "Fira Code", monospace;
+  font-size: 0.875em;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+}
+
+/* ─── Focus visible ──────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────── */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ─── Loading skeleton ───────────────────────────────────────────────────── */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.skeleton {
+  background: var(--bg-muted);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* ─── Page transition ────────────────────────────────────────────────────── */
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-in 0.2s ease-out forwards;
+}
+
+/* ─── ReactFlow overrides ────────────────────────────────────────────────── */
+
+.react-flow__background {
+  background-color: var(--bg) !important;
+}
+
+.react-flow__controls button {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--bg-subtle) !important;
+}
+
+.react-flow__minimap {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+}

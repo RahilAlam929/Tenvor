@@ -10,6 +10,8 @@ class GraphBuilder:
     def build(self, results: list[ParseResult]) -> CodeGraph:
         graph = CodeGraph()
 
+        function_ids = {}
+
         for result in results:
             file_id = f"file:{result.file_path}"
 
@@ -38,6 +40,12 @@ class GraphBuilder:
                         line=entity.line,
                     )
                 )
+
+                if entity.entity_type == "function":
+                    function_ids.setdefault(
+                        entity.name,
+                        []
+                    ).append(entity_id)
 
                 graph.edges.append(
                     GraphEdge(
@@ -70,5 +78,39 @@ class GraphBuilder:
                         relation="imports",
                     )
                 )
+
+        for result in results:
+            for call in result.calls:
+                callee_name = call.callee.split(".")[-1]
+
+                caller_candidates = function_ids.get(call.caller, [])
+                callee_candidates = function_ids.get(callee_name, [])
+
+                if not caller_candidates or not callee_candidates:
+                    continue
+
+                caller_id = next(
+                    (
+                        node_id
+                        for node_id in caller_candidates
+                        if call.file_path in node_id
+                    ),
+                    None,
+                )
+
+                if not caller_id:
+                    continue
+
+                for callee_id in callee_candidates:
+                    if caller_id == callee_id:
+                        continue
+
+                    graph.edges.append(
+                        GraphEdge(
+                            source=caller_id,
+                            target=callee_id,
+                            relation="calls",
+                        )
+                    )
 
         return graph

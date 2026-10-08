@@ -1,5 +1,20 @@
+# Backend
 backend/.venv/
 
-backend/.venv/
-
+# Cloned repositories
 data/repositories/
+backend/data/repositories/
+
+# Frontend build artifacts
+frontend/.next/
+frontend/node_modules/
+
+# Environment files
+.env
+.env.local
+frontend/.env.local
+backend/.env
+backend/.env.local
+
+# macOS
+.DS_Store

@@ -12,8 +12,17 @@ class CodeEntity:
 
 
 @dataclass
+class CodeCall:
+    caller: str
+    callee: str
+    file_path: str
+    line: int
+
+
+@dataclass
 class ParseResult:
     file_path: str
     language: str
     entities: List[CodeEntity] = field(default_factory=list)
     imports: List[str] = field(default_factory=list)
+    calls: List[CodeCall] = field(default_factory=list)
