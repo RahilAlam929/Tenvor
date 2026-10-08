@@ -2,7 +2,9 @@
 
 > Understand every layer of your codebase.
 
-TENVOR is a codebase intelligence platform that transforms a software repository into an explorable graph of files, functions, classes, imports, and call relationships. It helps developers understand unfamiliar codebases, navigate dependencies, trace function calls, and reason about the impact of changes.
+TENVOR is a codebase intelligence platform that transforms a software repository into an explorable graph of files, functions, classes, imports, and call relationships. It helps developers understand unfamiliar codebases, navigate dependencies, search code relationships, inspect call paths, and analyze potential impact before making changes.
+
+![TENVOR Landing Page](docs/screenshots/landing.png)
 
 ---
 
@@ -52,29 +54,245 @@ See [Roadmap](#roadmap).
 
 ---
 
-## Architecture
+## How TENVOR Works
+
+```mermaid
+flowchart TD
+    A[Open TENVOR] --> B[Import Repository]
+    B --> C[Repository Scanner]
+    C --> D[Tree-sitter Parser]
+    D --> E[Code Graph]
+    E --> F[Neo4j]
+    F --> G[FastAPI]
+    G --> H[TENVOR Frontend]
+    H --> I[Search]
+    H --> J[Graph]
+    H --> K[Function Intelligence]
+    H --> L[Impact Analysis]
+```
+
+### Step 1 — Open TENVOR
+
+Navigate to `http://localhost:3000`. The TENVOR frontend presents the Overview dashboard if a codebase has been indexed, or guides you to import a repository first.
+
+### Step 2 — Import a repository
+
+Go to the **Repositories** page and enter a public GitHub repository URL. The frontend sends the request to the backend:
 
 ```
-Repository
-    │
-    ▼
-Repository Importer        (git clone, file scan, language detection)
-    │
-    ▼
-Tree-sitter Parser          (Python — functions, classes, imports, calls)
-    │
-    ▼
-Graph Builder               (nodes + edges in memory)
-    │
-    ▼
-Neo4j                       (persistent property graph)
-    │
-    ▼
-FastAPI                     (REST API, graph queries, search)
-    │
-    ▼
-Next.js Frontend            (graph visualization, search, impact analysis)
+POST /repositories/import
+{ "url": "https://github.com/owner/repository" }
 ```
+
+TENVOR performs a shallow clone (`--depth 1`) for speed, then scans all files for language statistics.
+
+### Step 3 — Repository processing
+
+After the clone completes, the backend pipeline runs:
+
+```
+Repository URL
+  → Git clone (shallow, --depth 1)
+  → File scan (all files, language detection)
+  → Tree-sitter parser (per .py file)
+  → Entity extraction (functions, classes, imports)
+  → Call relationship extraction (caller → callee)
+  → Graph builder (nodes + edges in memory)
+  → Neo4j persistence (MERGE operations)
+```
+
+### Step 4 — The code graph
+
+TENVOR represents your codebase as a property graph. Entities become nodes; relationships become edges:
+
+```
+File
+  ↓ defines
+Function
+  ↓ calls
+Function
+
+File
+  ↓ imports
+Module
+```
+
+Every node carries an `id`, `node_type`, `name`, `file_path`, and `line`. Edges carry a `type`: `defined_in`, `calls`, or `imports`.
+
+### Step 5 — Explore
+
+The Overview dashboard shows live statistics pulled from Neo4j: total nodes, relationships, functions, classes, files, and imports. A functions table lists all indexed functions with their file paths and line numbers, each linking directly to Impact Analysis.
+
+### Step 6 — Search
+
+Use the **Search** page or the global search bar in the top bar to find anything across the indexed codebase. The frontend queries:
+
+```
+GET /graph/search?q=your_query
+```
+
+Results are grouped by type (functions, classes, files, imports) and include file paths and line numbers. Clicking a function result navigates to its Impact Analysis.
+
+### Step 7 — Function intelligence
+
+Select any function to inspect its full call context. The frontend calls three endpoints:
+
+```
+GET /graph/functions/{function_name}/callers
+GET /graph/functions/{function_name}/callees
+GET /graph/functions/{function_name}/impact
+```
+
+**Callers** — functions that call this function.  
+**Callees** — functions this function calls.  
+**Impact** — all call relationships involving this function as either source or target.
+
+### Step 8 — Understand impact
+
+Before modifying a function, open Impact Analysis to see:
+
+- How many functions call it directly
+- What other functions it depends on
+- The full set of call relationships it participates in
+
+This gives you a structural picture of the blast radius of any proposed change.
+
+---
+
+## Frontend
+
+The TENVOR frontend is a Next.js application running at `http://localhost:3000`. It includes a collapsible sidebar, global search bar, and theme switcher. All pages connect to the live backend API.
+
+### Overview
+
+The dashboard shows the current state of the indexed codebase. Live statistics are fetched from the backend at page load.
+
+- Total node count
+- Relationship count
+- Function count
+- Class count
+- File count
+- Import count
+- Quick action cards (Import, Browse, Graph, Search)
+- Functions table with file paths, line numbers, and direct links to Impact Analysis
+
+![Overview Dashboard](docs/screenshots/dashboard.png)
+
+![Overview Dashboard — Dark](docs/screenshots/dashboard-dark.png)
+
+---
+
+### Repositories
+
+The Repositories page handles repository import. Enter a GitHub URL and click **Import repository**. The frontend calls `POST /repositories/import` and displays the result: repository ID, file count, language distribution, and local clone path.
+
+If the import fails, a detailed error message is shown. No fake success states.
+
+![Repository Import](docs/screenshots/repository-import.png)
+
+---
+
+### Files
+
+The Files page shows a filterable list of all indexed source files. Clicking a file opens a detail panel on the right showing:
+
+- Full file path
+- Node ID
+- All functions and classes defined in the file (with line numbers)
+- Direct links to Impact Analysis for each function
+
+![File Explorer](docs/screenshots/files.png)
+
+---
+
+### Graph
+
+The Graph page renders all indexed nodes and relationships as an interactive canvas using React Flow. Node types are color-coded: files in blue, functions in green, classes in amber, imports in purple.
+
+Controls:
+
+- **Zoom and pan** — scroll to zoom, click-drag to pan
+- **Node filter** — filter by File, Function, Class, or Import
+- **Node search** — filter visible nodes by name
+- **Node inspector** — click any node to open a side panel showing its type, file path, line number, callers, and callees
+- **Full impact link** — from the inspector, navigate directly to Impact Analysis
+
+![Codebase Graph](docs/screenshots/codebase-graph.png)
+
+---
+
+### Search
+
+The Search page provides real-time codebase search. Results appear as you type (300ms debounce) and are grouped by node type. Each result shows the node name, type badge, file path, and line number. Function results include a direct link to Impact Analysis.
+
+The backend endpoint: `GET /graph/search?q=`
+
+![Search](docs/screenshots/search.png)
+
+---
+
+### Impact Analysis
+
+The Impact Analysis page provides a complete view of a function's connectivity in the code graph. Navigate here from any function in the Overview table, Search results, or Graph inspector.
+
+Shows:
+
+- **Direct callers count** — how many functions call this one
+- **Direct callees count** — how many functions this one calls
+- **Total impact relationships** — full count of call edges involving this function
+- **Callers list** — function name and source file for each caller
+- **Callees list** — function name and source file for each callee
+- **Full impact chain** — all call relationships shown as `source → target` pairs
+
+![Impact Analysis](docs/screenshots/impact-analysis.png)
+
+---
+
+### Documentation
+
+The built-in Documentation page is a complete technical reference for TENVOR. It covers repository ingestion, Tree-sitter parsing, the code graph model, Neo4j setup, search, call graph analysis, impact analysis, and the full API.
+
+Available at `/docs` inside the app.
+
+![Documentation](docs/screenshots/documentation.png)
+
+---
+
+### Blog
+
+The Blog section contains technical articles on codebase intelligence, graph databases, and developer tooling. Articles open on individual pages at `/blog/[slug]`.
+
+Published articles:
+
+- Understanding Codebases as Graphs
+- Why Codebase Intelligence Matters
+- Tree-sitter and Source Code Parsing
+- Call Graphs and Impact Analysis
+- Neo4j for Developer Tooling
+
+![Blog](docs/screenshots/blog.png)
+
+---
+
+### Settings
+
+The Settings page controls application appearance and shows the current backend connection status. Theme can be set to System, Light, or Dark. The API URL and backend version are displayed, with a live connection indicator.
+
+![Settings](docs/screenshots/settings.png)
+
+---
+
+### Light and dark themes
+
+TENVOR supports both light and dark themes, switchable via the top bar or the Settings page. Theme preference is persisted in the browser.
+
+| Light | Dark |
+|-------|------|
+| ![Light theme](docs/screenshots/landing.png) | ![Dark theme](docs/screenshots/landing-dark.png) |
+
+---
+
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -88,10 +306,6 @@ flowchart TD
 ```
 
 ### Graph data model
-
-Every parsed entity becomes a `CodeNode` with properties: `id`, `node_type`, `name`, `file_path`, `line`.
-
-Relationships are stored as `RELATES` edges with a `type` property.
 
 ```mermaid
 flowchart LR
@@ -144,7 +358,6 @@ tenvor/
 │   │   ├── core/
 │   │   ├── models/
 │   │   └── services/
-│   │       ├── github/
 │   │       ├── graph/
 │   │       │   ├── builder.py    # Graph construction
 │   │       │   ├── database.py   # Neo4j operations
@@ -185,6 +398,7 @@ tenvor/
 │   └── docker/
 │
 ├── docs/
+│   └── screenshots/
 ├── data/
 │   └── repositories/             # Cloned repositories
 ├── README.md
@@ -210,7 +424,7 @@ tenvor/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/tenvor.git
+git clone https://github.com/RahilAlam929/Tenvor.git
 cd tenvor
 ```
 
@@ -291,8 +505,6 @@ docker run -d \
 | `7474` | Neo4j Browser (HTTP) |
 | `7687` | Bolt protocol (application connection) |
 
-The default development credentials (`neo4j` / `tenvor123`) match the defaults configured in the backend. To use different credentials, set the environment variables described below.
-
 ---
 
 ## Environment Variables
@@ -311,39 +523,25 @@ The default development credentials (`neo4j` / `tenvor123`) match the defaults c
 |----------|---------|-------------|
 | `NEXT_PUBLIC_API_URL` | `http://127.0.0.1:8001` | Base URL for the TENVOR API |
 
-Copy `.env.example` to `.env` in the relevant directory and update values as needed.
-
 ---
 
 ## API
 
-The TENVOR backend exposes a REST API built with FastAPI. Full interactive documentation is available at `/docs` when running locally.
+The TENVOR backend exposes a REST API built with FastAPI. Full interactive documentation is available at `http://127.0.0.1:8001/docs` when running locally.
 
-### Health
-
-#### `GET /health`
-
-Returns the API status and version.
+### `GET /health`
 
 ```bash
 curl http://127.0.0.1:8001/health
 ```
 
 ```json
-{
-  "status": "ok",
-  "service": "tenvor-api",
-  "version": "0.1.0"
-}
+{ "status": "ok", "service": "tenvor-api", "version": "0.1.0" }
 ```
 
----
+### `POST /repositories/import`
 
-### Repositories
-
-#### `POST /repositories/import`
-
-Clone a Git repository and scan it for files and language statistics. Returns repository metadata including file count and language distribution.
+Clone a Git repository and scan it for files and language statistics.
 
 ```bash
 curl -X POST http://127.0.0.1:8001/repositories/import \
@@ -356,192 +554,49 @@ curl -X POST http://127.0.0.1:8001/repositories/import \
   "repository_id": "3f2a1b4c-...",
   "path": "data/repositories/3f2a1b4c-...",
   "file_count": 47,
-  "languages": {
-    "Python": 32,
-    "TypeScript": 9,
-    "JavaScript": 6
-  },
-  "files": ["src/main.py", "src/parser.py", "..."]
+  "languages": { "Python": 32, "TypeScript": 9 },
+  "files": ["src/main.py", "src/parser.py"]
 }
 ```
 
-> **Note:** This endpoint clones and scans the repository. Parsing and graph indexing are handled by the `RepositoryIndexer` service and are not yet wired to this HTTP endpoint in the current version. Files are cloned to `data/repositories/`.
+### `GET /graph/nodes`
 
----
-
-### Graph
-
-#### `GET /graph/nodes`
-
-Returns all indexed nodes. Optionally filter by type.
+Returns all indexed nodes. Optionally filter by type: `file`, `function`, `class`, `import`.
 
 ```
 GET /graph/nodes
 GET /graph/nodes?node_type=function
-GET /graph/nodes?node_type=class
-GET /graph/nodes?node_type=file
-GET /graph/nodes?node_type=import
 ```
 
-```json
-{
-  "nodes": [
-    {
-      "id": "function:app/parser.py:parse_file",
-      "node_type": "function",
-      "name": "parse_file",
-      "file_path": "app/parser.py",
-      "line": 14
-    }
-  ]
-}
-```
-
-#### `GET /graph/relationships`
+### `GET /graph/relationships`
 
 Returns all relationships between nodes.
 
-```json
-{
-  "relationships": [
-    {
-      "source": "parse_file",
-      "source_type": "function",
-      "relation": "calls",
-      "target": "build_graph",
-      "target_type": "function"
-    }
-  ]
-}
-```
-
-#### `GET /graph/stats`
-
-Returns aggregate counts for the graph.
+### `GET /graph/stats`
 
 ```json
-{
-  "nodes": 142,
-  "edges": 89
-}
+{ "nodes": 142, "edges": 89 }
 ```
 
-#### `GET /graph/search?q=`
+### `GET /graph/search?q=`
 
-Search all indexed nodes by name or file path. Case-insensitive substring match. Returns up to 50 results.
+Case-insensitive substring match across node names and file paths. Returns up to 50 results.
 
 ```
 GET /graph/search?q=parse_file
 ```
 
-```json
-{
-  "query": "parse_file",
-  "results": [
-    {
-      "id": "function:app/parser.py:parse_file",
-      "name": "parse_file",
-      "node_type": "function",
-      "file_path": "app/parser.py",
-      "line": 14
-    }
-  ]
-}
-```
+### `GET /graph/functions/{function_name}/callers`
 
----
+All functions in the graph that call the specified function.
 
-### Functions
+### `GET /graph/functions/{function_name}/callees`
 
-#### `GET /graph/functions/{function_name}/callers`
+All functions that the specified function calls.
 
-Returns all functions in the graph that call the specified function.
+### `GET /graph/functions/{function_name}/impact`
 
-```
-GET /graph/functions/parse_file/callers
-```
-
-```json
-{
-  "function": "parse_file",
-  "callers": [
-    {
-      "caller": "index_repository",
-      "caller_file": "app/services/indexer/service.py",
-      "target": "parse_file",
-      "target_file": "app/services/parser/service.py"
-    }
-  ]
-}
-```
-
-#### `GET /graph/functions/{function_name}/callees`
-
-Returns all functions that the specified function calls.
-
-```
-GET /graph/functions/parse_file/callees
-```
-
-```json
-{
-  "function": "parse_file",
-  "callees": [
-    {
-      "source": "parse_file",
-      "source_file": "app/services/parser/service.py",
-      "callee": "_walk",
-      "callee_file": "app/services/parser/service.py"
-    }
-  ]
-}
-```
-
-#### `GET /graph/functions/{function_name}/impact`
-
-Returns all call relationships that involve the specified function as either source or target. Use this to understand the full connectivity of a function in the graph.
-
-```
-GET /graph/functions/parse_file/impact
-```
-
-```json
-{
-  "function": "parse_file",
-  "impact": [
-    {
-      "source": "index_repository",
-      "source_file": "app/services/indexer/service.py",
-      "target": "parse_file",
-      "target_file": "app/services/parser/service.py"
-    }
-  ]
-}
-```
-
----
-
-## How to Use TENVOR
-
-1. **Start Neo4j.** Run the Docker command above or connect to an existing Neo4j instance.
-
-2. **Start the backend.** Run `uvicorn app.main:app --reload --port 8001` from the `backend` directory.
-
-3. **Start the frontend.** Run `npm run dev` from the `frontend` directory.
-
-4. **Open the frontend.** Navigate to `http://localhost:3000`.
-
-5. **Import a repository.** Go to the Repositories page and enter a GitHub repository URL. TENVOR will clone the repository and scan its files.
-
-6. **Explore the codebase graph.** Navigate to the Graph page to see an interactive visualization of indexed nodes and relationships. Filter by node type, zoom, pan, and click nodes to inspect them.
-
-7. **Search the codebase.** Use the Search page or the global search bar to find functions, classes, and files by name or path.
-
-8. **Inspect callers and callees.** Click any function node in the graph to see what calls it and what it calls. Or navigate directly to Impact Analysis from any search result.
-
-9. **Analyze change impact.** Use the Impact Analysis page to understand the full set of relationships involving a function before making changes.
-
-10. **Browse files.** Navigate to the Files page to browse indexed source files and the entities defined within them.
+All call relationships involving the specified function as either source or target.
 
 ---
 
@@ -549,90 +604,25 @@ GET /graph/functions/parse_file/impact
 
 ### How it works
 
-#### 1. Repository ingestion
+1. **Repository ingestion** — shallow clone via `git clone --depth 1`, then full file scan with language detection.
 
-TENVOR accepts a Git URL. It performs a shallow clone (`--depth 1`) for speed, then scans all files in the repository, filtering out known non-source directories (`.git`, `.venv`, `node_modules`, `__pycache__`).
+2. **Parsing** — `.py` files are parsed with the `PythonParser` using `tree-sitter-python`. Each file produces a `ParseResult` containing entities and calls.
 
-#### 2. Parsing
+3. **Entity extraction** — Tree-sitter walks the syntax tree and extracts `function_definition`, `class_definition`, `import_statement`, and `import_from_statement` nodes.
 
-The repository parser walks the cloned directory and processes each source file. Currently, `.py` files are parsed using the `PythonParser`, which uses Tree-sitter with the `tree-sitter-python` grammar.
+4. **Relationship extraction** — `call` nodes are identified and the current enclosing function is tracked to record caller → callee pairs.
 
-#### 3. Entity extraction
+5. **Graph construction** — `GraphBuilder` converts `ParseResult` objects into `CodeGraph` nodes and edges. Call resolution is name-based.
 
-Tree-sitter produces a concrete syntax tree for each file. The parser walks the tree and extracts:
+6. **Neo4j persistence** — nodes and edges are written with `MERGE` operations to prevent duplicates. Node IDs follow the pattern `{type}:{file_path}:{name}`.
 
-- **Functions** — `function_definition` nodes, capturing name and line number
-- **Classes** — `class_definition` nodes, capturing name and line number
-- **Imports** — `import_statement` and `import_from_statement` nodes, capturing the full import text
+7. **Search** — Cypher `CONTAINS` query on node name and file path, case-insensitive, up to 50 results.
 
-#### 4. Relationship extraction
+8. **Call graph analysis** — Cypher traversals on `RELATES {type: "calls"}` edges. One hop for callers/callees.
 
-While walking the syntax tree, the parser tracks the current enclosing function and identifies `call` nodes. For each call, it records the caller function name and callee expression.
+9. **Impact analysis** — returns all `calls` edges where the function appears as source or target, giving a combined inbound/outbound view.
 
-#### 5. Graph construction
-
-The `GraphBuilder` converts parsed results into a `CodeGraph`:
-
-- Each file becomes a `file` node
-- Each entity (function, class, import) becomes a typed node
-- Each entity gets a `defined_in` edge to its file
-- Each import gets an `imports` edge from its file
-- Each resolved call gets a `calls` edge between function nodes
-
-Call resolution is name-based: if the callee expression matches a known function name, an edge is created. Cross-file resolution uses file path matching.
-
-#### 6. Neo4j persistence
-
-The graph is saved to Neo4j using `MERGE` operations to avoid duplicates. Nodes use a composite ID: `{type}:{file_path}:{name}`.
-
-#### 7. Search
-
-The search endpoint queries Neo4j with a `CONTAINS` match on node name and file path, returning up to 50 results ordered by name.
-
-#### 8. Call graph analysis
-
-Caller and callee queries use Cypher traversals on the `RELATES {type: "calls"}` edges. The queries are scoped to direct relationships (one hop).
-
-#### 9. Impact analysis
-
-The impact endpoint returns all `calls` relationships where the specified function appears as either source or target. This gives a combined view of inbound and outbound call connections.
-
-#### 10. Frontend visualization
-
-The Next.js frontend uses `@xyflow/react` (React Flow) to render the code graph as an interactive canvas. Nodes are color-coded by type. Selecting a node opens an inspector panel showing its properties, callers, and callees.
-
----
-
-## Screenshots
-
-Screenshots will be added as the project matures. Contributions of screenshots are welcome.
-
-Planned screenshot locations:
-
-```
-docs/screenshots/dashboard.png
-docs/screenshots/graph.png
-docs/screenshots/search.png
-docs/screenshots/impact-analysis.png
-docs/screenshots/repository-import.png
-docs/screenshots/file-explorer.png
-docs/screenshots/documentation.png
-docs/screenshots/blog.png
-```
-
----
-
-## Design Philosophy
-
-TENVOR is built on a few core convictions:
-
-**Code is a graph, not a file tree.** The relationships between functions, modules, and files are the most important structural information in a codebase. A flat file tree hides this structure. A graph makes it explicit.
-
-**Intelligence should be earned, not invented.** TENVOR derives structure from actual source code using a real parser. It does not rely on heuristics, fake data, or LLM hallucination to describe your codebase.
-
-**Developer tools should be fast and usable.** The graph should load quickly, search results should appear immediately, and navigation should feel natural.
-
-**The graph is a foundation.** Codebase search, call analysis, and impact detection are the first layer. The graph enables deeper capabilities over time.
+10. **Frontend visualization** — React Flow renders nodes as a pannable, zoomable canvas. Node inspector fetches callers and callees on demand.
 
 ---
 
@@ -640,33 +630,30 @@ TENVOR is built on a few core convictions:
 
 The following features are planned and not yet implemented:
 
-- **Additional language support** — JavaScript, TypeScript, Go, Java, and others via Tree-sitter grammars
-- **Cross-file symbol resolution** — improved call resolution using import analysis
-- **Advanced dependency graphs** — module-level and package-level dependency views
-- **Architecture maps** — automatically generated high-level views of system structure
-- **GitHub integration** — connect repositories via the GitHub API, sync on push
-- **Pull request intelligence** — analyze the impact of changes in a pull request before merge
-- **Change impact prediction** — trace the propagation of a change through the call graph
-- **AI codebase agent** — answer questions about a codebase in natural language
-- **Natural-language queries** — ask questions like "where is authentication handled?"
-- **MCP integration** — expose graph intelligence as a Model Context Protocol server
-- **Multi-repository graphs** — connect and cross-reference multiple codebases
-- **Enterprise authentication** — SSO, RBAC, and team-based access control
-- **Team workspaces** — shared graph views, annotations, and bookmarks
-- **Production-scale indexing** — incremental updates, background indexing pipelines
+- Additional language support (JavaScript, TypeScript, Go, Java) via Tree-sitter grammars
+- Cross-file symbol resolution using import analysis
+- Advanced dependency graphs (module and package level)
+- Architecture maps — automatically generated high-level structural views
+- GitHub integration — sync repositories via the GitHub API
+- Pull request intelligence — analyze change impact before merge
+- Change impact prediction — trace propagation through the call graph
+- AI codebase agent — answer natural-language questions about a codebase
+- MCP integration — expose graph intelligence as a Model Context Protocol server
+- Multi-repository graphs
+- Enterprise authentication (SSO, RBAC)
+- Team workspaces (shared views, annotations, bookmarks)
+- Production-scale incremental indexing
 
 ---
 
 ## AI Direction
 
-TENVOR's long-term direction includes an AI layer that can reason about the codebase graph. The graph provides the structured context that language models often lack when answering questions about specific codebases.
-
-Planned capabilities include:
+TENVOR's long-term direction includes an AI layer that reasons over the code graph. Planned capabilities:
 
 - Explain what a function does based on its call context
 - Describe the architecture of a module or service
 - Answer questions like "what handles authentication?" or "where does this data flow?"
-- Find relevant code given a natural-language description of behavior
+- Find relevant code from a natural-language description of behavior
 - Trace execution paths through the call graph
 - Predict which functions are affected by a proposed change
 
@@ -678,24 +665,20 @@ This layer is in early design. The current system provides the graph foundation 
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidance.
 
-The general workflow:
-
 1. Fork the repository.
 2. Create a branch from `main`: `git checkout -b feature/your-feature`.
 3. Make your changes.
-4. Run any existing tests: `cd backend && python -m pytest`.
-5. Ensure the frontend builds without errors: `cd frontend && npm run build`.
-6. Open a pull request with a clear description of the change and why it is needed.
+4. Run tests: `cd backend && python -m pytest`.
+5. Ensure the frontend builds: `cd frontend && npm run build`.
+6. Open a pull request with a clear description of the change.
 
-Please follow existing code style conventions. Backend code uses Python type hints throughout. Frontend code uses strict TypeScript.
+Backend code uses Python type hints throughout. Frontend code uses strict TypeScript.
 
 ---
 
 ## Security
 
-For security vulnerabilities, see [SECURITY.md](SECURITY.md).
-
-Do not open public GitHub issues for security-sensitive reports. Follow the process described in SECURITY.md.
+For security vulnerabilities, see [SECURITY.md](SECURITY.md). Do not open public issues for security-sensitive reports.
 
 ---
 
@@ -709,6 +692,6 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 TENVOR is under active development.
 
-The current system includes a working backend intelligence MVP (repository import, Tree-sitter parsing, Neo4j graph persistence, REST API) and an actively developed Next.js frontend with interactive graph visualization, search, impact analysis, and documentation.
+The current system includes a working backend intelligence MVP (repository import, Tree-sitter parsing, Neo4j graph persistence, REST API) and an actively developed Next.js frontend with interactive graph visualization, search, impact analysis, file explorer, documentation, and blog.
 
 The platform is not yet production-ready. APIs may change. Features are being added. Feedback and contributions are welcome.
