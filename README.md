@@ -4,8 +4,7 @@
 
 TENVOR is a codebase intelligence platform that transforms a software repository into an explorable graph of files, functions, classes, imports, and call relationships. It helps developers understand unfamiliar codebases, navigate dependencies, search code relationships, inspect call paths, and analyze potential impact before making changes.
 
-![TENVOR Landing Page](Uploading Screenshot 2026-10-09 at 11.04.10 PM.png)
-
+![TENVOR Landing Page] <img width="961" height="756" alt="Screenshot 2026-10-09 at 11 04 10 PM" src="https://github.com/user-attachments/assets/04c1ad67-c1fe-4483-8101-ab3f948eb8c8" />
 
 
 ---
