@@ -27,15 +27,15 @@ export async function generateMetadata({
 // ─── Category color map ───────────────────────────────────────────────────────
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
-  Architecture: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-  Engineering: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-  Technology: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  Architecture: "linear-gradient(135deg, #f0e1d2 0%, #e6c8ae 100%)",
+  Engineering: "linear-gradient(135deg, #e5e8dc 0%, #cbd3c4 100%)",
+  Technology: "linear-gradient(135deg, #f5ead6 0%, #ead5b2 100%)",
 };
 
 const CATEGORY_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  Architecture: { bg: "rgba(99,102,241,0.12)", text: "#818cf8" },
-  Engineering: { bg: "rgba(34,197,94,0.12)", text: "#4ade80" },
-  Technology: { bg: "rgba(245,158,11,0.12)", text: "#fbbf24" },
+  Architecture: { bg: "#f0e1d2", text: "#8a5633" },
+  Engineering: { bg: "#e5e8dc", text: "#465747" },
+  Technology: { bg: "#f5ead6", text: "#8a6537" },
 };
 
 export const instant = false;
@@ -72,11 +72,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="tv-article-page mx-auto w-full max-w-6xl px-5 py-10 md:px-8 md:py-14">
       {/* ── Back link ────────────────────────────────────────────── */}
       <Link
         href="/blog"
-        className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium blog-back-link"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-medium blog-back-link"
         style={{ color: "var(--text-muted)" }}
       >
         <ArrowLeft size={13} />
@@ -95,7 +95,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           {/* Header */}
           <header className="mb-8">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="mb-5 flex flex-wrap items-center gap-3">
               <span
                 className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
                 style={{ background: badgeColors.bg, color: badgeColors.text }}
@@ -118,7 +118,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               </span>
             </div>
             <h1
-              className="mb-3 text-balance text-2xl font-semibold"
+              className="tv-article-title mb-5 text-balance text-4xl font-semibold md:text-5xl"
               style={{
                 color: "var(--text)",
                 letterSpacing: "-0.04em",
@@ -151,7 +151,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border px-2.5 py-0.5 text-xs"
+                  className="rounded-sm border px-3 py-1 text-xs"
                   style={{
                     borderColor: "var(--border)",
                     color: "var(--text-subtle)",
@@ -176,7 +176,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {prevPost && (
                 <Link
                   href={`/blog/${prevPost.slug}`}
-                  className="blog-nav-card rounded-lg border p-4"
+                  className="blog-nav-card rounded-sm border p-5"
                   style={{
                     background: "var(--bg-elevated)",
                     borderColor: "var(--border)",
@@ -250,7 +250,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     <Link
                       key={p.slug}
                       href={`/blog/${p.slug}`}
-                      className="blog-related-card flex items-start gap-3 rounded-lg border p-3"
+                      className="blog-related-card flex items-start gap-3 rounded-sm border p-4"
                       style={{
                         background: "var(--bg-elevated)",
                         borderColor: "var(--border)",
@@ -386,7 +386,7 @@ function ContentBlock({ block }: { block: Block }) {
       return (
         <h2
           id={slugifyHeading(block.text)}
-          className="mb-3 mt-10 text-base font-semibold"
+          className="tv-article-heading mb-4 mt-12 text-2xl font-semibold md:text-3xl"
           style={{
             color: "var(--text)",
             letterSpacing: "-0.02em",
@@ -400,7 +400,7 @@ function ContentBlock({ block }: { block: Block }) {
     case "paragraph":
       return (
         <p
-          className="mb-5 text-sm"
+          className="tv-article-paragraph mb-6 text-base md:text-[17px]"
           style={{ color: "var(--text-muted)", lineHeight: "1.85" }}
           dangerouslySetInnerHTML={{ __html: inlineMarkdown(block.text) }}
         />
@@ -409,7 +409,7 @@ function ContentBlock({ block }: { block: Block }) {
     case "code":
       return (
         <div
-          className="mb-5 overflow-hidden rounded-lg border"
+          className="tv-article-code mb-7 overflow-hidden rounded-sm border"
           style={{ borderColor: "var(--border)" }}
         >
           {block.lang && (
@@ -451,11 +451,6 @@ function ContentBlock({ block }: { block: Block }) {
               className="flex items-start gap-2.5 text-sm"
               style={{ color: "var(--text-muted)", lineHeight: "1.75" }}
             >
-              <span
-                className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                style={{ background: "var(--text-subtle)" }}
-                aria-hidden="true"
-              />
               <span
                 dangerouslySetInnerHTML={{ __html: inlineMarkdown(item) }}
               />

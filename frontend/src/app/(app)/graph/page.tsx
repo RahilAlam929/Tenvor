@@ -21,10 +21,10 @@ import { ErrorState, LoadingState } from "@/components/ui/States";
 import type { GraphNode, NodeType } from "@/lib/api/types";
 
 const NODE_COLORS: Record<NodeType, string> = {
-  file:     "#2563eb",
-  function: "#16a34a",
-  class:    "#ca8a04",
-  import:   "#9333ea",
+  file:     "#657c78",
+  function: "#53775d",
+  class:    "#d88c55",
+  import:   "#798178",
 };
 
 const NODE_TYPE_LABELS: Record<NodeType, string> = {
@@ -61,9 +61,16 @@ export default function GraphPage() {
       data: { label: node.name, nodeType: node.node_type, raw: node },
       style: {
         background: `color-mix(in srgb, ${NODE_COLORS[node.node_type as NodeType] ?? "#71717a"} 15%, var(--bg-elevated))`,
-        border: `1px solid ${NODE_COLORS[node.node_type as NodeType] ?? "#71717a"}40`,
+        border: `1px solid ${
+          selectedNode?.id === node.id
+            ? "#d88c55"
+            : `${NODE_COLORS[node.node_type as NodeType] ?? "#71717a"}40`
+        }`,
+        boxShadow: selectedNode?.id === node.id
+          ? "0 0 0 2px rgba(216, 140, 85, 0.20)"
+          : "none",
         color: "var(--text)",
-        borderRadius: "8px",
+        borderRadius: "3px",
         fontSize: "11px",
         fontFamily: "var(--font-geist-mono, monospace)",
         padding: "6px 10px",
@@ -71,7 +78,7 @@ export default function GraphPage() {
         maxWidth: "200px",
       },
     }));
-  }, [data, filter, search]);
+  }, [data, filter, search, selectedNode]);
 
   const nodeIds = useMemo(() => new Set(flowNodes.map((n) => n.id)), [flowNodes]);
 
@@ -84,7 +91,7 @@ export default function GraphPage() {
         source: r.source,
         target: r.target,
         label: r.relation,
-        style: { stroke: "var(--border)", strokeWidth: 1 },
+        style: { stroke: "#9ba398", strokeWidth: 1.15 },
         labelStyle: { fontSize: "9px", fill: "var(--text-subtle)" },
         animated: r.relation === "calls",
       }));
@@ -137,7 +144,7 @@ export default function GraphPage() {
         >
           {/* Search */}
           <div
-            className="flex items-center gap-2 rounded-md border px-3 py-1.5 shadow-sm"
+            className="flex items-center gap-2 rounded-sm border px-3 py-1.5"
             style={{ background: "var(--bg-elevated)", borderColor: "var(--border)" }}
           >
             <Search size={13} style={{ color: "var(--text-subtle)" }} />
@@ -153,7 +160,7 @@ export default function GraphPage() {
 
           {/* Type filter */}
           <div
-            className="flex flex-wrap gap-1.5 rounded-md border p-2 shadow-sm"
+            className="flex flex-wrap gap-1.5 rounded-sm border p-2"
             style={{ background: "var(--bg-elevated)", borderColor: "var(--border)" }}
           >
             <FilterChip
@@ -174,7 +181,7 @@ export default function GraphPage() {
 
           {/* Stats */}
           <div
-            className="rounded-md border px-3 py-1.5 text-xs shadow-sm"
+            className="rounded-sm border px-3 py-1.5 text-xs"
             style={{
               background: "var(--bg-elevated)",
               borderColor: "var(--border)",
@@ -195,7 +202,7 @@ export default function GraphPage() {
           attributionPosition="bottom-right"
           style={{ background: "var(--bg)" }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="var(--border)" />
+          <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#d9d8cc" />
           <Controls />
           <MiniMap
             nodeColor={(n) =>
@@ -229,7 +236,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className="rounded px-2 py-0.5 text-xs transition-colors"
+      className="rounded-sm border px-2 py-0.5 text-xs transition-colors"
       style={{
         background: active
           ? color
@@ -330,7 +337,7 @@ function NodeInspector({ node, onClose }: { node: GraphNode; onClose: () => void
           <div className="p-4">
             <a
               href={`/impact?fn=${encodeURIComponent(node.name)}`}
-              className="flex w-full items-center justify-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+              className="flex w-full items-center justify-center rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors"
               style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
             >
               Full impact analysis →

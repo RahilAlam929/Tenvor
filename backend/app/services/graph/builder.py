@@ -11,6 +11,7 @@ class GraphBuilder:
         graph = CodeGraph()
 
         function_ids = {}
+        file_function_ids = {}
 
         for result in results:
             file_id = f"file:{result.file_path}"
@@ -43,6 +44,13 @@ class GraphBuilder:
 
                 if entity.entity_type == "function":
                     function_ids.setdefault(
+                        entity.name,
+                        []
+                    ).append(entity_id)
+                    file_function_ids.setdefault(
+                        result.file_path,
+                        {}
+                    ).setdefault(
                         entity.name,
                         []
                     ).append(entity_id)
@@ -83,34 +91,25 @@ class GraphBuilder:
             for call in result.calls:
                 callee_name = call.callee.split(".")[-1]
 
-                caller_candidates = function_ids.get(call.caller, [])
-                callee_candidates = function_ids.get(callee_name, [])
+                file_functions = file_function_ids.get(call.file_path, {})
+                caller_candidates = file_functions.get(call.caller, [])
+                callee_candidates = file_functions.get(callee_name, [])
 
-                if not caller_candidates or not callee_candidates:
+                if len(caller_candidates) != 1 or len(callee_candidates) != 1:
                     continue
 
-                caller_id = next(
-                    (
-                        node_id
-                        for node_id in caller_candidates
-                        if call.file_path in node_id
-                    ),
-                    None,
-                )
+                caller_id = caller_candidates[0]
+                callee_id = callee_candidates[0]
 
-                if not caller_id:
+                if caller_id == callee_id:
                     continue
 
-                for callee_id in callee_candidates:
-                    if caller_id == callee_id:
-                        continue
-
-                    graph.edges.append(
-                        GraphEdge(
-                            source=caller_id,
-                            target=callee_id,
-                            relation="calls",
-                        )
+                graph.edges.append(
+                    GraphEdge(
+                        source=caller_id,
+                        target=callee_id,
+                        relation="calls",
                     )
+                )
 
         return graph

@@ -68,7 +68,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         }}
       >
         <div
-          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm"
           style={{ background: "var(--text)", color: "var(--bg)" }}
         >
           <Share2 size={14} />
@@ -92,11 +92,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               key={href}
               href={href}
               title={collapsed ? label : undefined}
-              className="group flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+              className="group relative flex items-center gap-3 rounded-sm px-2 py-2 text-sm transition-colors"
               style={{
                 color: isActive ? "var(--text)" : "var(--text-muted)",
                 background: isActive ? "var(--bg-subtle)" : "transparent",
-                fontWeight: isActive ? "500" : "400",
+                fontWeight: isActive ? "600" : "400",
+                boxShadow: isActive ? "inset 2px 0 0 var(--accent-primary)" : "none",
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {

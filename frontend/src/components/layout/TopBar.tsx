@@ -58,7 +58,7 @@ export function TopBar({ sidebarCollapsed }: TopBarProps) {
             placeholder="Search codebase..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-8 w-full rounded-md border bg-transparent pl-9 pr-3 text-sm outline-none transition-colors"
+            className="h-8 w-full rounded-sm border bg-transparent pl-9 pr-3 text-sm outline-none transition-colors"
             style={{
               borderColor: "var(--border)",
               color: "var(--text)",
