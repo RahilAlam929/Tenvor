@@ -5,6 +5,7 @@ export interface BlogPost {
   date: string;
   category: string;
   readingTime: string;
+  tags: string[];
   content: string;
 }
 
@@ -17,6 +18,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: "2025-10-01",
     category: "Architecture",
     readingTime: "6 min",
+    tags: ["graphs", "architecture", "neo4j"],
     content: `
 ## The limits of flat file search
 
@@ -76,6 +78,7 @@ The graph can then be queried via REST API or explored through the interactive g
     date: "2025-09-24",
     category: "Engineering",
     readingTime: "5 min",
+    tags: ["engineering", "dx"],
     content: `
 ## Scale breaks intuition
 
@@ -123,6 +126,7 @@ The goal is not to replace code review or human understanding, but to give devel
     date: "2025-09-17",
     category: "Technology",
     readingTime: "7 min",
+    tags: ["parsing", "tree-sitter", "ast"],
     content: `
 ## What is Tree-sitter?
 
@@ -175,6 +179,7 @@ This means call resolution is approximate. Dynamic dispatch, higher-order functi
     date: "2025-09-10",
     category: "Engineering",
     readingTime: "6 min",
+    tags: ["call-graphs", "impact", "engineering"],
     content: `
 ## What is a call graph?
 
@@ -221,6 +226,7 @@ TENVOR exposes all three views and presents them in the Impact Analysis page.
     date: "2025-09-03",
     category: "Technology",
     readingTime: "5 min",
+    tags: ["neo4j", "graphs", "database"],
     content: `
 ## Why a graph database?
 
@@ -269,4 +275,23 @@ TENVOR uses bolt protocol connections managed by the official Neo4j Python drive
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((p) => p.slug === slug);
+}
+
+/**
+ * Returns posts that share at least one tag with the given slug's post,
+ * sorted by number of overlapping tags (descending), excluding the post itself.
+ */
+export function getRelatedPosts(slug: string, limit = 3): BlogPost[] {
+  const post = getPostBySlug(slug);
+  if (!post) return [];
+
+  return BLOG_POSTS.filter((p) => p.slug !== slug)
+    .map((p) => ({
+      post: p,
+      overlap: p.tags.filter((t) => post.tags.includes(t)).length,
+    }))
+    .filter(({ overlap }) => overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap)
+    .slice(0, limit)
+    .map(({ post: p }) => p);
 }

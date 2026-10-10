@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Code2,
+  Layers,
+  Box,
 } from "lucide-react";
 
 interface NavItem {
@@ -25,6 +27,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Overview",         href: "/overview",         icon: LayoutDashboard },
+  { label: "Workspace",        href: "/workspace",        icon: Layers },
+  { label: "Architecture",     href: "/architecture",     icon: Box },
   { label: "Repositories",     href: "/repositories",     icon: GitFork },
   { label: "Files",            href: "/files",            icon: Files },
   { label: "Graph",            href: "/graph",            icon: Share2 },

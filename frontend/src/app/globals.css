@@ -22,6 +22,11 @@
   --accent:        #18181b;
   --accent-hover:  #27272a;
 
+  /* Accent primary (brand indigo) */
+  --accent-primary:        #6366f1;
+  --accent-primary-hover:  #4f46e5;
+  --accent-primary-subtle: rgba(99, 102, 241, 0.1);
+
   /* Status */
   --success:       #16a34a;
   --warning:       #ca8a04;
@@ -29,9 +34,9 @@
   --info:          #2563eb;
 
   /* Sidebar */
-  --sidebar-width: 220px;
+  --sidebar-width:           220px;
   --sidebar-collapsed-width: 56px;
-  --topbar-height: 52px;
+  --topbar-height:           52px;
 }
 
 .dark {
@@ -49,6 +54,11 @@
 
   --accent:        #e4e4e7;
   --accent-hover:  #fafafa;
+
+  /* Accent primary (brand indigo — lighter in dark mode) */
+  --accent-primary:        #818cf8;
+  --accent-primary-hover:  #6366f1;
+  --accent-primary-subtle: rgba(129, 140, 248, 0.1);
 }
 
 /* ─── Tailwind theme bridge ──────────────────────────────────────────────── */
@@ -119,7 +129,7 @@ code, pre, kbd {
 /* ─── Focus visible ──────────────────────────────────────────────────────── */
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -154,6 +164,124 @@ code, pre, kbd {
   animation: page-in 0.2s ease-out forwards;
 }
 
+/* ─── Keyframe animations ────────────────────────────────────────────────── */
+
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ─── Animation utility classes ─────────────────────────────────────────── */
+
+.animate-fade-up {
+  animation: fade-up 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ─── Gradient text ──────────────────────────────────────────────────────── */
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #8b5cf6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ─── Glassmorphism ──────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+  background: rgba(17, 17, 19, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Code block ─────────────────────────────────────────────────────────── */
+
+.code-block {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-geist-mono), "Fira Code", monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text);
+  tab-size: 2;
+}
+
+.code-block code {
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* ─── Reduced-motion overrides ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+
+  .page-enter {
+    animation: none;
+  }
+
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-float {
+    animation: none;
+  }
+}
+
 /* ─── ReactFlow overrides ────────────────────────────────────────────────── */
 
 .react-flow__background {
@@ -174,4 +302,22 @@ code, pre, kbd {
   background: var(--bg-elevated) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
+}
+
+/* ─── Blog article hover states ──────────────────────────────────────────── */
+
+.blog-nav-card:hover {
+  border-color: var(--text-subtle) !important;
+}
+
+.blog-related-card:hover {
+  border-color: var(--text-subtle) !important;
+}
+
+.blog-back-link:hover {
+  color: var(--text) !important;
+}
+
+.toc-link:hover {
+  color: var(--text) !important;
 }
