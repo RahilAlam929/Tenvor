@@ -189,7 +189,8 @@ The Repositories page handles repository import. Enter a GitHub URL and click **
 
 If the import fails, a detailed error message is shown. No fake success states.
 
-![Repository Import](docs/screenshots/repository-import.png)
+![Repository Import]. <img width="960" height="868" alt="Screenshot 2026-10-09 at 11 25 51 PM" src="https://github.com/user-attachments/assets/665d7141-5bf6-40ea-b36f-4aa2d8bff5df" />
+
 
 ---
 
@@ -202,7 +203,8 @@ The Files page shows a filterable list of all indexed source files. Clicking a f
 - All functions and classes defined in the file (with line numbers)
 - Direct links to Impact Analysis for each function
 
-![File Explorer](docs/screenshots/files.png)
+![File Explorer]. <img width="953" height="902" alt="Screenshot 2026-10-09 at 11 26 37 PM" src="https://github.com/user-attachments/assets/de937116-cdf5-41fe-92a8-e1ecafd6ac1c" />
+
 
 ---
 
