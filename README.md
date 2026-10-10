@@ -7,6 +7,7 @@ TENVOR is a codebase intelligence platform that transforms a software repository
 ![TENVOR Landing Page](![Uploading Screenshot 2026-10-09 at 11.04.10 PM.png…]()
 )
 
+
 ---
 
 ## Overview
